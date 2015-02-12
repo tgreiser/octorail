@@ -30,7 +30,7 @@ This is a segment of LED strip, it can have 0 or more LED pixels. If 0, it is ju
      *  - create the fadecandy "dot" example pattern
 
 ### History
-In the LEDesic project we had the need to create a video map for controlling a geodesic dome installation with 5 fadecandy drivers controlling a total of 2250 pixels. After making a prototype and beginning work on the full size installation we relized that managing LED geometry configurations inside the processing file itself is not ideal when flexibility is desired. The LEDesic dome will be launching a kickstarter soon (in 2015). If you use octorail, please consider donating!
+In the LEDesic project we had the need to create a video map for controlling a geodesic dome installation with 5 fadecandy drivers controlling a total of 2250 pixels. After making a prototype and beginning work on the full size installation we realized that managing LED geometry configurations inside the processing file itself is not ideal when flexibility is desired. The LEDesic dome will be launching a kickstarter soon (in 2015). If you use octorail, please consider donating!
 
 ### Credits
 
