@@ -29,6 +29,9 @@ This is a segment of LED strip, it can have 0 or more LED pixels. If 0, it is ju
      /  - create a radar sweep test pattern
      *  - create the fadecandy "dot" example pattern
 
+### History
+In the LEDesic project we had the need to create a video map for controling a geodesic dome installation with 5 fadecandy drivers controlling a total of 2250 pixels. After making a prototype and beginning work on the full size installation we relized that managing LED geometry configurations inside the processing file itself is not ideal when flexibility is desired. The LEDesic dome will be launching a kickstarter soon (in 2015). If you use octorail, please consider donating!
+
 ### Credits
 
 Developed by Tim Greiser as part of the LEDesic project. Thanks to my partner Amanda for help and inspiration.
