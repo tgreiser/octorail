@@ -63,8 +63,7 @@ class VideoController extends Controller {
     String filekey = "text";
     String file = vi.get(filekey).toString();
     println("Playing video : "+file);
-    movie.dispose();
-    movie = null;
+    this.stop();
     movie = new Movie(app, file);
     movie.loop();
   }
@@ -105,8 +104,9 @@ class VideoController extends Controller {
         file = vi.get("text").toString();
         
         println("Loading " + file);
-        movie = new Movie(app, file);
-        movie.loop();
+        d1.setValue((float)key-48);
+        //movie = new Movie(app, file);
+        //movie.loop();
       } catch (java.lang.IndexOutOfBoundsException e) {
         // no need to complain
       }  
