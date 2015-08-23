@@ -13,8 +13,8 @@ You configure one or more LED drivers along with the attached pixels and assembl
 Fadecandy is a next generation LED driver that receives data over USB (possibly from a raspberry Pi). Multiple drivers can be coordinated via TCP/IP by OpenPixelControl (OPC). This means you can coordinate thousands of pixels in realtime over the network.
 
 ### Requirements
-* Processing 2+ - https://processing.org/
-* ControlP5 - http://www.sojamo.de/libraries/controlP5/
+* Processing 2 - https://processing.org/
+* ControlP5 - version 2.2.0+ - http://www.sojamo.de/libraries/controlP5/
 * OPC compatible LED driver(s)
 
 ### Driver

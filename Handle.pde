@@ -10,7 +10,7 @@ class Handle {
   float x;
   float y;
   float size;
-  Bar bar;
+  Segment seg;
   boolean first;
   
   boolean mouseOver = false;
@@ -19,16 +19,16 @@ class Handle {
   float offsetX = 0.0;
   float offsetY = 0.0;
   
-  Handle(Bar _bar, boolean _first, float _size) {
+  Handle(Segment _seg, boolean _first, float _size) {
     first = _first; //<>//
     if (first) {
-      x = _bar.x1;
-      y = _bar.y1;
+      x = _seg.x1;
+      y = _seg.y1;
     } else {
-      x = _bar.x2;
-      y = _bar.y2;
+      x = _seg.x2;
+      y = _seg.y2;
     }
-    bar = _bar;
+    seg = _seg;
     size = _size;
   }
   
@@ -70,7 +70,9 @@ class Handle {
   }
   
   void clicked(float mx, float my) {
+    println("Clicked");
     if (mouseOver) {
+      println("Mouse over");
       dragging = true;
       offsetX = x-mx;
       offsetY = y-my;
@@ -84,9 +86,9 @@ class Handle {
       
       if (first) {
         println("Updated first");
-        bar.update(true, x, y);
+        seg.update(true, x, y);
       } else {
-        bar.update(false, x, y);
+        seg.update(false, x, y);
         println("Updated second");
       }
     }

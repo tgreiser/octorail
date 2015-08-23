@@ -1,22 +1,27 @@
 /*
  * Octorail
  * Configure and video map modular systems of LED strips using OPC / FadeCandy
+ * https://github.com/tgreiser/octorail
  *
  * (c) Tim Greiser - 2015
  * Released under the terms of MIT License
  */
 
 import controlP5.*;
+import java.util.Arrays;
 
-OPC opc;
+DriverController driverController;
+VideoController videoController;
+SegmentController segmentController;
+
+Controller[] ctrls;
+LEDMap map;
+
 PImage dot;
 int mode = 1;
 ControlP5 c5;
 
-CheckBox checkbox;
-BarList bars;
 Textlabel logo;
-Textlabel tsec;
 
 color cb1 = #728CA6;
 color cb2 = #4A6B8A;
@@ -38,17 +43,26 @@ color cg5 = #003925;
 
 String server = "127.0.0.1";
 
-int h = 450;
-int w = 450;
-
 void setup()
 {
-  size(900, 450, P3D);
+  println("Begin...");
+  map = new LEDMap(this, server);
+  println("Connected to " + server);
   
-  int align = 450;
+  size(map.w*2, map.h, P3D);
   frame.setResizable(false);
+  frameRate(60);
   
-  opc = new OPC(this, server, 7890);
+  ctrls = new Controller[3];
+  driverController = new DriverController();
+  videoController = new VideoController();
+  println("Initialize segmentController");
+  segmentController = new SegmentController();
+  ctrls[0] = videoController;
+  ctrls[1] = segmentController;
+  ctrls[2] = driverController;
+  
+  println("Initialized controllers");
   
   c5 = new ControlP5(this);
   
@@ -58,48 +72,27 @@ void setup()
                     .setColorValue(cg1)
                     .setFont(createFont("Consolas",40))
                     ;
-  tsec = new Textlabel(c5,"Toggle Drivers",align+285,55, 100,20, 255, 0);
-    
-  checkbox = c5.addCheckBox("drivers")
-    .setPosition(align+250, 70);
-  customize(checkbox);
-
-  bars = new BarList(align);
-  bars.load(sketchPath+"/data/bars.csv");
-
+   
   dot = loadImage("dot.png");
-  frameRate(60);
-
-  setupVideo();
+  
+  println("Setting up controllers...");
+  int iX = 0;
+  for (Controller c : ctrls) {
+    println("Controller " + iX++);
+    c.setup(this, map);
+  }
 }
 
-void customize(CheckBox cb) {
-  cb.setColorForeground(cg1)
-                .setColorActive(cg4)
-                .setColorLabel(color(255))
-                .setSize(20, 20)
-                .setItemsPerRow(5)
-                .setSpacingColumn(20)
-                .setSpacingRow(20)
-                .addItem("1", 1)
-                .addItem("2", 2)
-                .addItem("3", 3)
-                .addItem("4", 4)
-                .addItem("5", 5)
-                .activateAll()
-                ;
-}
-
-void customize(ListBox ddl, String label) {
+void customize(ScrollableList ddl, String label) {
   // a convenience function to customize a DropdownList
   ddl.setBackgroundColor(cb2);
   ddl.setItemHeight(20);
   ddl.setBarHeight(15);
-  ddl.captionLabel().set(label);
-  ddl.captionLabel().style().marginTop = 3;
-  ddl.captionLabel().style().marginLeft = 3;
-  ddl.captionLabel().setColor(cg1);
-  ddl.valueLabel().style().marginTop = 3;
+  ddl.getCaptionLabel().set(label);
+  ddl.getCaptionLabel().getStyle().marginTop = 3;
+  ddl.getCaptionLabel().getStyle().marginLeft = 3;
+  ddl.getCaptionLabel().setColor(cg1);
+  ddl.getValueLabel().getStyle().marginTop = 3;
   
   //ddl.scroll(0);
   ddl.setColorBackground(cb3);
@@ -115,62 +108,38 @@ void draw()
   
   //println(frameRate);
 
-  if (mode == 1) {
-    drawVideo();
-  } else if (mode == 2) {
+  videoController.active = (mode == 1);
+  for (Controller c : ctrls) {
+    c.draw();
+  }
+  
+  if (mode == 2) {
     drawRing();
   } else if (mode == 4) {
     drawDot();
-  } else {
+  } else if (mode == 5) {
     drawRadar();
   }
-  bars.draw();
-  tsec.draw(this);
+  
   stroke(color(0));
-}
-
-void updateConfig() {
-  if (checkbox == null || bars == null || opc == null) { return; }
-  println("updateConfig");
-  float[] vals = checkbox.getArrayValue();
-
-  opc.reset();
-  
-  if (vals[0] == 1.0) bars.leds(opc, 1);
-  if (vals[1] == 1.0) bars.leds(opc, 2);
-  if (vals[2] == 1.0) bars.leds(opc, 3);
-  if (vals[3] == 1.0) bars.leds(opc, 4);
-  if (vals[4] == 1.0) bars.leds(opc, 5);
-  
-  bars.buildList();
 }
 
 void controlEvent(ControlEvent theEvent) {
   
-  if (theEvent.isFrom(checkbox)) {
-    print("got an event from "+checkbox.getName()+"\t\n");
-    // checkbox uses arrayValue to store the state of 
-    // individual checkbox-items. usage:
-    //opc.dispose();
-    updateConfig();  
-  } else if (theEvent.name().equals("videos")) {
-    println("Event: "+theEvent.getGroup().getValue()+" from "+ theEvent.getGroup());
-    playVideo(int(theEvent.getGroup().getValue()));
+  for (Controller c : ctrls) {
+    c.controlEvent(theEvent);
   }
-  
-  if (bars != null) bars.controlEvent(theEvent);
-}
-
-void checkBox(float[] a) {
-  println(a);
 }
 
 void keyPressed() {
-  if (bars != null && bars.isFocus() == true) {
+  if (segmentController != null && segmentController.isFocus() == true) {
     return;
   }
   
-  keyPressedVideo();
+  for (Controller c : ctrls) {
+    c.keyPressed();
+  }
+  
   override = 0;
   //mode = key - 48;
   if (key == 46) {
@@ -188,6 +157,7 @@ void keyPressed() {
 
 int radarCount = 0;
 void drawRadar() {
+  println("Draw radar");
   int m = (millis() / 50 ) % 60;
   float s = map(m, 0, 60, 0, TWO_PI) - HALF_PI;
   if (override != 0) { s = override; } 
@@ -195,40 +165,45 @@ void drawRadar() {
   stroke(255);
   strokeWeight(5);
   int cx, cy;
-  cx = h/2;
-  cy = w/2;
+  cx = map.h/2;
+  cy = map.w/2;
   line(cx, cy, cx + cos(s) * cx, cy + sin(s) * cx);
 }
 float override = 0;
 
 void mousePressed() {
-  override();
-  bars.clicked(mouseX, mouseY);
+  for (Controller c : ctrls) {
+    c.mousePressed();
+  }
 }
 
 void mouseReleased() {
-  bars.stopDragging();
+  for (Controller c : ctrls) {
+    c.mouseReleased();
+  }
 }
 
 void mouseDragged() {
-  override();
+  for (Controller c : ctrls) {
+    c.mouseDragged();
+  }
 }
 
 void saveCallback(File selected) {
-  bars.saveCallback(selected);
+  segmentController.saveCallback(selected);
 }
 
 void loadCallback(File selected) {
   if (selected == null) { return; }
-  bars.load(selected.getAbsolutePath());
+  segmentController.load(selected.getAbsolutePath());
 }
 
 void override() {
   if (mode == 2) {
-    override = dist(w/2, h/2, mouseX, mouseY)*2;
+    override = dist(map.w/2, map.h/2, mouseX, mouseY)*2;
   } else if (mode == 3) {
-    int cx = w/2;
-    int cy = h/2;
+    int cx = map.w/2;
+    int cy = map.h/2;
     int dy = mouseY - cy;
     int dx = mouseX - cx;
     
@@ -245,13 +220,13 @@ int ringCount = 0;
 void drawRing() {
   stroke(255);
   strokeWeight(4);
-  if (ringCount++ > h) ringCount = 0;
+  if (ringCount++ > map.h) ringCount = 0;
   float size = float(ringCount);
   if (override > 0) { size = override; }
   fill(255);
-  ellipse(h/2, w/2, size, size);
+  ellipse(map.h/2, map.w/2, size, size);
   fill(0);
-  ellipse(h/2, w/2, size-10, size-10);
+  ellipse(map.h/2, map.w/2, size-10, size-10);
 }
 
 void drawDot() {
@@ -264,6 +239,7 @@ void drawDot() {
 }
 
 void stop() {
-  stopVideo();
+  for (Controller c : ctrls) {
+    c.stop();
+  }
 }
-
